@@ -17,7 +17,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  min-height: 58px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--background-modifier-border);
   background: color-mix(in srgb, var(--background-primary) 94%, transparent);
 }
@@ -39,9 +40,9 @@
 }
 
 .plawe-ai-logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
 }
 
 .plawe-ai-title {
@@ -52,7 +53,7 @@
 .plawe-ai-status {
   margin-top: 2px;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .plawe-ai-icon-button {
@@ -64,7 +65,7 @@
 .plawe-ai-chat {
   flex: 1;
   overflow-y: auto;
-  padding: 22px max(14px, calc((100% - 760px) / 2));
+  padding: 18px max(14px, calc((100% - 760px) / 2));
   scroll-behavior: smooth;
 }
 
@@ -197,29 +198,31 @@
 }
 
 .plawe-ai-composer-wrap {
-  padding: 8px max(12px, calc((100% - 760px) / 2)) max(12px, env(safe-area-inset-bottom));
-  border-top: 1px solid var(--background-modifier-border);
-  background: var(--background-primary);
+  position: relative;
+  z-index: 5;
+  padding: 8px max(12px, calc((100% - 760px) / 2)) max(10px, env(safe-area-inset-bottom));
+  border-top: 0;
+  background: linear-gradient(to bottom, transparent, var(--background-primary) 18px);
 }
 
 .plawe-ai-context-row {
   display: flex;
   gap: 8px;
-  margin-bottom: 7px;
+  margin: 0 8px -1px;
 }
 
 .plawe-ai-context-button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 32px;
+  min-height: 29px;
   max-width: 75%;
-  padding: 5px 10px;
+  padding: 4px 9px;
   border: 1px solid var(--background-modifier-border);
-  border-radius: 10px;
+  border-radius: 9px 9px 0 0;
   background: var(--background-secondary);
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .plawe-ai-context-button.is-active {
@@ -238,9 +241,9 @@
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  padding: 7px;
+  padding: 6px;
   border: 1px solid var(--background-modifier-border);
-  border-radius: 17px;
+  border-radius: 16px;
   background: var(--background-secondary);
   box-shadow: 0 5px 22px rgba(0, 0, 0, .08);
 }
@@ -252,9 +255,9 @@
 
 .plawe-ai-input {
   flex: 1;
-  min-height: 42px;
+  min-height: 40px;
   max-height: 160px;
-  padding: 10px 9px;
+  padding: 9px;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -267,10 +270,10 @@
 
 .plawe-ai-send {
   display: grid;
-  flex: 0 0 42px;
+  flex: 0 0 40px;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   border: 0;
   border-radius: 13px;
@@ -359,14 +362,18 @@
 
 .plawe-ai-error {
   margin: 0 0 18px 37px;
-  padding: 12px;
+  padding: 11px 12px;
   border: 1px solid color-mix(in srgb, var(--color-red) 35%, transparent);
   border-radius: 12px;
   background: color-mix(in srgb, var(--color-red) 8%, transparent);
 }
 
 .plawe-ai-error button {
-  margin-top: 9px;
+  min-height: 34px;
+  margin-top: 8px;
+  padding: 5px 11px;
+  border-radius: 9px;
+  font-size: 12px;
 }
 
 .suggestion-item.plawe-ai-slash-item {
@@ -403,11 +410,12 @@
 
 @media (max-width: 600px) {
   .plawe-ai-header {
-    padding: 11px 13px;
+    min-height: 54px;
+    padding: 8px 12px;
   }
 
   .plawe-ai-chat {
-    padding: 17px 12px;
+    padding: 14px 12px 8px;
   }
 
   .plawe-ai-message {
@@ -416,11 +424,38 @@
   }
 
   .plawe-ai-composer-wrap {
-    padding-inline: 9px;
+    padding: 7px 9px max(8px, env(safe-area-inset-bottom));
   }
 
   .plawe-ai-welcome {
     justify-content: flex-start;
-    padding-top: 15vh;
+    min-height: auto;
+    padding-top: 10vh;
+  }
+
+  .plawe-ai-welcome-logo {
+    width: 54px;
+    height: 54px;
+    margin-bottom: 14px;
+    border-radius: 18px;
+    font-size: 23px;
+  }
+
+  .plawe-ai-welcome h2 {
+    font-size: 21px;
+  }
+
+  .plawe-ai-examples {
+    gap: 7px;
+  }
+
+  .plawe-ai-examples button {
+    min-height: 42px;
+    font-size: 13px;
+  }
+
+  .plawe-ai-error {
+    margin-left: 0;
+    font-size: 13px;
   }
 }

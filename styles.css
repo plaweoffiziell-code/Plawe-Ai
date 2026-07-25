@@ -89,7 +89,7 @@
 .plawe-ai-message-row {
   display: flex;
   gap: 9px;
-  margin: 0 0 19px;
+  margin: 0 0 15px;
 }
 
 .plawe-ai-message-row.is-user {
@@ -98,15 +98,15 @@
 
 .plawe-ai-avatar {
   display: grid;
-  flex: 0 0 28px;
+  flex: 0 0 22px;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  margin-top: 3px;
-  border-radius: 9px;
+  width: 22px;
+  height: 22px;
+  margin-top: 4px;
+  border-radius: 7px;
   background: var(--plawe-accent);
   color: var(--text-on-accent);
-  font-size: 12px;
+  font-size: 9px;
   font-weight: 800;
 }
 
@@ -173,7 +173,7 @@
 .plawe-ai-context-row {
   display: flex;
   gap: 8px;
-  margin: 0 8px -1px;
+  margin: 0 8px 6px;
 }
 
 .plawe-ai-context-button {
@@ -184,10 +184,54 @@
   max-width: 75%;
   padding: 4px 9px;
   border: 1px solid var(--background-modifier-border);
-  border-radius: 9px 9px 0 0;
+  border-radius: 9px;
   background: var(--background-secondary);
   color: var(--text-muted);
   font-size: 11px;
+}
+
+.plawe-ai-attachments {
+  display: flex;
+  gap: 6px;
+  margin: 0 3px 7px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.plawe-ai-attachments.is-empty {
+  display: none;
+}
+
+.plawe-ai-attachment-chip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  min-height: 31px;
+  max-width: 190px;
+  padding: 4px 5px 4px 9px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.plawe-ai-attachment-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plawe-ai-attachment-chip button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
 }
 
 .plawe-ai-context-button.is-active {
@@ -295,6 +339,179 @@
   color: var(--text-muted);
   font-size: 11px;
   white-space: pre-wrap;
+}
+
+.plawe-ai-change-preview {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.plawe-ai-change-block {
+  overflow: hidden;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  background: var(--background-primary);
+}
+
+.plawe-ai-change-block.is-before {
+  border-color: color-mix(in srgb, var(--color-red) 28%, var(--background-modifier-border));
+}
+
+.plawe-ai-change-block.is-after {
+  border-color: color-mix(in srgb, var(--color-green) 35%, var(--background-modifier-border));
+}
+
+.plawe-ai-change-label {
+  padding: 6px 9px;
+  color: var(--text-muted);
+  background: var(--background-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.plawe-ai-change-block pre {
+  max-height: 170px;
+  margin: 0;
+  padding: 9px;
+  overflow: auto;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  white-space: pre-wrap;
+}
+
+.plawe-ai-open-note {
+  min-height: 34px;
+  margin-top: 10px;
+  padding: 5px 11px;
+  border-radius: 9px;
+  font-size: 12px;
+}
+
+.plawe-ai-file-modal {
+  width: min(620px, calc(100vw - 24px));
+  max-height: min(760px, calc(100vh - 48px));
+}
+
+.plawe-ai-file-modal .modal-content {
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+}
+
+.plawe-ai-file-modal-header h2 {
+  margin: 0 0 4px;
+}
+
+.plawe-ai-file-modal-header p {
+  margin: 0 0 13px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.plawe-ai-file-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  background: var(--background-secondary);
+}
+
+.plawe-ai-file-search input {
+  width: 100%;
+  min-height: 43px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.plawe-ai-file-list {
+  flex: 1;
+  min-height: 180px;
+  max-height: 52vh;
+  margin: 10px 0;
+  overflow-y: auto;
+}
+
+.plawe-ai-file-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-normal);
+  text-align: left;
+}
+
+.plawe-ai-file-row.is-selected {
+  background: var(--plawe-soft);
+}
+
+.plawe-ai-file-row-icon {
+  color: var(--text-muted);
+}
+
+.plawe-ai-file-row-text {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.plawe-ai-file-name,
+.plawe-ai-file-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plawe-ai-file-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.plawe-ai-file-path {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.plawe-ai-file-check {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  color: var(--interactive-accent);
+}
+
+.plawe-ai-file-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.plawe-ai-file-modal-footer button {
+  min-height: 40px;
+  padding: 7px 16px;
+}
+
+.plawe-ai-file-count,
+.plawe-ai-file-empty {
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 .plawe-ai-action-buttons {

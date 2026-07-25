@@ -1,0 +1,9 @@
+{
+  "id": "plawe-ai",
+  "name": "Plawe AI",
+  "version": "0.1.0",
+  "minAppVersion": "1.7.2",
+  "description": "A clean, mobile-first AI chat that can understand and organize your vault.",
+  "author": "Plawe",
+  "isDesktopOnly": false
+}

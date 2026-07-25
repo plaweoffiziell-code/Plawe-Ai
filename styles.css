@@ -74,51 +74,16 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 78%;
+  min-height: 50%;
   padding: 24px 4px;
   text-align: center;
 }
 
-.plawe-ai-welcome-logo {
-  width: 64px;
-  height: 64px;
-  margin-bottom: 18px;
-  border-radius: 21px;
-  font-size: 27px;
-}
-
 .plawe-ai-welcome h2 {
-  margin: 0 0 8px;
-  font-size: 23px;
-}
-
-.plawe-ai-welcome p {
-  max-width: 430px;
-  margin: 0 0 24px;
+  margin: 0;
   color: var(--text-muted);
-  line-height: 1.5;
-}
-
-.plawe-ai-examples {
-  display: grid;
-  gap: 9px;
-  width: min(100%, 440px);
-}
-
-.plawe-ai-examples button {
-  min-height: 46px;
-  padding: 10px 15px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 13px;
-  background: var(--background-secondary);
-  color: var(--text-normal);
-  text-align: left;
-  font-size: 14px;
-}
-
-.plawe-ai-examples button:hover {
-  border-color: var(--plawe-accent);
-  background: var(--plawe-soft);
+  font-size: 22px;
+  font-weight: 600;
 }
 
 .plawe-ai-message-row {
@@ -410,8 +375,7 @@
 
 @media (max-width: 600px) {
   .plawe-ai-header {
-    min-height: 54px;
-    padding: 8px 12px;
+    display: none;
   }
 
   .plawe-ai-chat {
@@ -424,34 +388,17 @@
   }
 
   .plawe-ai-composer-wrap {
-    padding: 7px 9px max(8px, env(safe-area-inset-bottom));
+    padding: 7px 9px calc(82px + env(safe-area-inset-bottom));
   }
 
   .plawe-ai-welcome {
-    justify-content: flex-start;
-    min-height: auto;
-    padding-top: 10vh;
-  }
-
-  .plawe-ai-welcome-logo {
-    width: 54px;
-    height: 54px;
-    margin-bottom: 14px;
-    border-radius: 18px;
-    font-size: 23px;
+    justify-content: center;
+    min-height: 46%;
+    padding: 0;
   }
 
   .plawe-ai-welcome h2 {
-    font-size: 21px;
-  }
-
-  .plawe-ai-examples {
-    gap: 7px;
-  }
-
-  .plawe-ai-examples button {
-    min-height: 42px;
-    font-size: 13px;
+    font-size: 20px;
   }
 
   .plawe-ai-error {

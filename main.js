@@ -474,24 +474,7 @@ var PlaweAIView = class extends import_obsidian5.ItemView {
   }
   renderWelcome() {
     const welcome = this.chatEl.createDiv({ cls: "plawe-ai-welcome" });
-    welcome.createDiv({ cls: "plawe-ai-welcome-logo", text: "P" });
-    welcome.createEl("h2", { text: "Moin, was machen wir?" });
-    welcome.createEl("p", {
-      text: "Frag etwas, lass eine Notiz erstellen oder bring Ordnung in dein Vault."
-    });
-    const examples = welcome.createDiv({ cls: "plawe-ai-examples" });
-    for (const prompt of [
-      "Fass meine aktuelle Notiz zusammen",
-      "Erstelle mir eine \xFCbersichtliche Wochenplanung",
-      "Finde \xE4hnliche Notizen und verkn\xFCpfe sie"
-    ]) {
-      const button = examples.createEl("button", { text: prompt });
-      button.addEventListener("click", () => {
-        this.inputEl.value = prompt;
-        this.resizeInput();
-        void this.send();
-      });
-    }
+    welcome.createEl("h2", { text: "Plawe AI" });
   }
   resetChat() {
     if (this.busy) return;

@@ -23,7 +23,7 @@ __export(main_exports, {
   default: () => PlaweAIPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 
 // src/settings.ts
 var import_obsidian = require("obsidian");
@@ -97,13 +97,89 @@ var PlaweSlashSuggest = class extends import_obsidian2.EditorSuggest {
 };
 
 // src/view.ts
-var import_obsidian5 = require("obsidian");
+var import_obsidian6 = require("obsidian");
+
+// src/file-picker.ts
+var import_obsidian3 = require("obsidian");
+var SUPPORTED_EXTENSIONS = /* @__PURE__ */ new Set(["md", "txt", "csv", "json", "yaml", "yml"]);
+var PlaweFilePicker = class extends import_obsidian3.Modal {
+  constructor(app, selectedPaths, onDone) {
+    super(app);
+    this.query = "";
+    this.selected = new Set(selectedPaths);
+    this.onDone = onDone;
+  }
+  onOpen() {
+    const { contentEl, modalEl } = this;
+    modalEl.addClass("plawe-ai-file-modal");
+    contentEl.empty();
+    const header = contentEl.createDiv({ cls: "plawe-ai-file-modal-header" });
+    header.createEl("h2", { text: "Dateien hinzuf\xFCgen" });
+    header.createEl("p", { text: "Notizen und Textdateien als Kontext ausw\xE4hlen." });
+    const searchWrap = contentEl.createDiv({ cls: "plawe-ai-file-search" });
+    const icon = searchWrap.createSpan();
+    (0, import_obsidian3.setIcon)(icon, "search");
+    const input = searchWrap.createEl("input", {
+      type: "search",
+      placeholder: "Datei suchen \u2026",
+      attr: { "aria-label": "Datei suchen" }
+    });
+    input.addEventListener("input", () => {
+      this.query = input.value.toLocaleLowerCase();
+      this.renderList();
+    });
+    this.listEl = contentEl.createDiv({ cls: "plawe-ai-file-list" });
+    this.renderList();
+    const footer = contentEl.createDiv({ cls: "plawe-ai-file-modal-footer" });
+    const count = footer.createSpan({ cls: "plawe-ai-file-count" });
+    const updateCount = () => count.setText(`${this.selected.size} ausgew\xE4hlt`);
+    updateCount();
+    const done = footer.createEl("button", { cls: "mod-cta", text: "\xDCbernehmen" });
+    done.addEventListener("click", () => {
+      this.onDone([...this.selected]);
+      this.close();
+    });
+    this.modalEl.addEventListener("plawe-selection-change", updateCount);
+    window.setTimeout(() => input.focus(), 50);
+  }
+  renderList() {
+    this.listEl.empty();
+    const files = this.app.vault.getFiles().filter((file) => SUPPORTED_EXTENSIONS.has(file.extension.toLocaleLowerCase())).filter((file) => !this.query || file.path.toLocaleLowerCase().includes(this.query)).slice(0, 150);
+    if (!files.length) {
+      this.listEl.createDiv({ cls: "plawe-ai-file-empty", text: "Keine passende Datei gefunden." });
+      return;
+    }
+    for (const file of files) this.renderFile(file);
+  }
+  renderFile(file) {
+    var _a;
+    const row = this.listEl.createEl("button", { cls: "plawe-ai-file-row" });
+    const icon = row.createSpan({ cls: "plawe-ai-file-row-icon" });
+    (0, import_obsidian3.setIcon)(icon, "file-text");
+    const text = row.createSpan({ cls: "plawe-ai-file-row-text" });
+    text.createSpan({ cls: "plawe-ai-file-name", text: file.basename });
+    text.createSpan({ cls: "plawe-ai-file-path", text: ((_a = file.parent) == null ? void 0 : _a.path) || "/" });
+    const check = row.createSpan({ cls: "plawe-ai-file-check" });
+    const refresh = () => {
+      row.toggleClass("is-selected", this.selected.has(file.path));
+      check.empty();
+      if (this.selected.has(file.path)) (0, import_obsidian3.setIcon)(check, "check");
+    };
+    refresh();
+    row.addEventListener("click", () => {
+      if (this.selected.has(file.path)) this.selected.delete(file.path);
+      else this.selected.add(file.path);
+      refresh();
+      this.modalEl.dispatchEvent(new Event("plawe-selection-change"));
+    });
+  }
+};
 
 // src/provider.ts
-var import_obsidian4 = require("obsidian");
+var import_obsidian5 = require("obsidian");
 
 // src/tools.ts
-var import_obsidian3 = require("obsidian");
+var import_obsidian4 = require("obsidian");
 var MUTATING_TOOLS = /* @__PURE__ */ new Set([
   "create_note",
   "replace_note",
@@ -245,7 +321,7 @@ function asString(value, key) {
   return value;
 }
 function notePath(value, key = "path") {
-  let path = (0, import_obsidian3.normalizePath)(asString(value, key));
+  let path = (0, import_obsidian4.normalizePath)(asString(value, key));
   if (!path.toLowerCase().endsWith(".md")) path += ".md";
   if (path.startsWith("../") || path === ".md") throw new Error("Ung\xFCltiger Pfad.");
   return path;
@@ -286,7 +362,7 @@ function describeMutation(call) {
 async function runReadTool(app, call) {
   const args = parseArgs(call);
   if (call.function.name === "list_notes") {
-    const folder = typeof args.folder === "string" ? (0, import_obsidian3.normalizePath)(args.folder) : "";
+    const folder = typeof args.folder === "string" ? (0, import_obsidian4.normalizePath)(args.folder) : "";
     const limit = Math.min(Math.max(Number(args.limit) || 50, 1), 100);
     const paths = app.vault.getMarkdownFiles().map((file) => file.path).filter((path) => !folder || path.startsWith(`${folder}/`) || path === folder).slice(0, limit);
     return JSON.stringify({ notes: paths });
@@ -294,7 +370,7 @@ async function runReadTool(app, call) {
   if (call.function.name === "read_note") {
     const path = notePath(args.path);
     const file = app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof import_obsidian3.TFile)) throw new Error(`Notiz nicht gefunden: ${path}`);
+    if (!(file instanceof import_obsidian4.TFile)) throw new Error(`Notiz nicht gefunden: ${path}`);
     return await app.vault.cachedRead(file);
   }
   if (call.function.name === "search_vault") {
@@ -329,14 +405,14 @@ async function runMutation(app, call) {
   if (name === "replace_note") {
     const path = notePath(args.path);
     const file = app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof import_obsidian3.TFile)) throw new Error(`Notiz nicht gefunden: ${path}`);
+    if (!(file instanceof import_obsidian4.TFile)) throw new Error(`Notiz nicht gefunden: ${path}`);
     await app.vault.process(file, () => asString(args.content, "content"));
     return `Bearbeitet: ${path}`;
   }
   if (name === "append_note") {
     const path = notePath(args.path);
     const file = app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof import_obsidian3.TFile)) throw new Error(`Notiz nicht gefunden: ${path}`);
+    if (!(file instanceof import_obsidian4.TFile)) throw new Error(`Notiz nicht gefunden: ${path}`);
     const addition = asString(args.content, "content");
     await app.vault.process(file, (current) => `${current}${current.endsWith("\n") ? "" : "\n"}${addition}`);
     return `Erg\xE4nzt: ${path}`;
@@ -345,14 +421,14 @@ async function runMutation(app, call) {
     const from = notePath(args.from, "from");
     const to = notePath(args.to, "to");
     const file = app.vault.getAbstractFileByPath(from);
-    if (!(file instanceof import_obsidian3.TFile)) throw new Error(`Notiz nicht gefunden: ${from}`);
+    if (!(file instanceof import_obsidian4.TFile)) throw new Error(`Notiz nicht gefunden: ${from}`);
     if (app.vault.getAbstractFileByPath(to)) throw new Error(`Ziel existiert bereits: ${to}`);
     await ensureParent(app, to);
     await app.fileManager.renameFile(file, to);
     return `Verschoben: ${from} \u2192 ${to}`;
   }
   if (name === "create_folder") {
-    const path = (0, import_obsidian3.normalizePath)(asString(args.path, "path"));
+    const path = (0, import_obsidian4.normalizePath)(asString(args.path, "path"));
     if (app.vault.getAbstractFileByPath(path)) throw new Error(`Existiert bereits: ${path}`);
     await app.vault.createFolder(path);
     return `Ordner erstellt: ${path}`;
@@ -360,7 +436,7 @@ async function runMutation(app, call) {
   if (name === "trash_note") {
     const path = notePath(args.path);
     const file = app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof import_obsidian3.TFile)) throw new Error(`Notiz nicht gefunden: ${path}`);
+    if (!(file instanceof import_obsidian4.TFile)) throw new Error(`Notiz nicht gefunden: ${path}`);
     await app.fileManager.trashFile(file);
     return `In Papierkorb gelegt: ${path}`;
   }
@@ -371,7 +447,7 @@ async function runMutation(app, call) {
 async function requestAI(settings, messages) {
   var _a, _b, _c;
   if (!settings.apiKey.trim()) throw new Error("Bitte zuerst deinen OpenRouter API-Key in den Plawe-AI-Einstellungen eintragen.");
-  const response = await (0, import_obsidian4.requestUrl)({
+  const response = await (0, import_obsidian5.requestUrl)({
     url: settings.endpoint,
     method: "POST",
     headers: {
@@ -400,11 +476,12 @@ async function requestAI(settings, messages) {
 
 // src/view.ts
 var PLAWE_AI_VIEW = "plawe-ai-chat";
-var PlaweAIView = class extends import_obsidian5.ItemView {
+var PlaweAIView = class extends import_obsidian6.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.messages = [];
     this.contextFile = null;
+    this.attachedPaths = [];
     this.busy = false;
     this.pending = /* @__PURE__ */ new Map();
     this.plugin = plugin;
@@ -432,17 +509,24 @@ var PlaweAIView = class extends import_obsidian5.ItemView {
       cls: "plawe-ai-icon-button clickable-icon",
       attr: { "aria-label": "Neuen Chat starten" }
     });
-    (0, import_obsidian5.setIcon)(reset, "square-pen");
+    (0, import_obsidian6.setIcon)(reset, "square-pen");
     reset.addEventListener("click", () => this.resetChat());
     this.chatEl = root.createDiv({ cls: "plawe-ai-chat" });
-    this.renderWelcome();
+    await this.restoreHistory();
     const composer = root.createDiv({ cls: "plawe-ai-composer-wrap" });
     const contextRow = composer.createDiv({ cls: "plawe-ai-context-row" });
+    const addButton = contextRow.createEl("button", { cls: "plawe-ai-context-button" });
+    const addIcon = addButton.createSpan();
+    (0, import_obsidian6.setIcon)(addIcon, "plus");
+    addButton.createSpan({ text: "Dateien" });
+    addButton.addEventListener("click", () => this.openFilePicker());
     const contextButton = contextRow.createEl("button", { cls: "plawe-ai-context-button" });
     const contextIcon = contextButton.createSpan();
-    (0, import_obsidian5.setIcon)(contextIcon, "file-text");
+    (0, import_obsidian6.setIcon)(contextIcon, "file-text");
     contextButton.createSpan({ text: "Aktuelle Notiz" });
     contextButton.addEventListener("click", () => this.toggleCurrentNote(contextButton));
+    this.attachmentsEl = composer.createDiv({ cls: "plawe-ai-attachments" });
+    this.renderAttachments();
     const composerBox = composer.createDiv({ cls: "plawe-ai-composer" });
     this.inputEl = composerBox.createEl("textarea", {
       cls: "plawe-ai-input",
@@ -463,7 +547,7 @@ var PlaweAIView = class extends import_obsidian5.ItemView {
       cls: "plawe-ai-send",
       attr: { "aria-label": "Senden" }
     });
-    (0, import_obsidian5.setIcon)(this.sendButton, "arrow-up");
+    (0, import_obsidian6.setIcon)(this.sendButton, "arrow-up");
     this.sendButton.addEventListener("click", () => void this.send());
   }
   focusInput() {
@@ -482,6 +566,7 @@ var PlaweAIView = class extends import_obsidian5.ItemView {
     this.pending.clear();
     this.chatEl.empty();
     this.renderWelcome();
+    void this.persistHistory();
     this.focusInput();
   }
   toggleCurrentNote(button) {
@@ -494,7 +579,7 @@ var PlaweAIView = class extends import_obsidian5.ItemView {
     }
     const file = this.app.workspace.getActiveFile();
     if (!file) {
-      new import_obsidian5.Notice("\xD6ffne zuerst eine Notiz.");
+      new import_obsidian6.Notice("\xD6ffne zuerst eine Notiz.");
       return;
     }
     this.contextFile = file;
@@ -522,7 +607,22 @@ var PlaweAIView = class extends import_obsidian5.ItemView {
 ${note}
 </current_note>`;
     }
-    this.messages.push({ role: "user", content });
+    for (const path of this.attachedPaths) {
+      const file = this.app.vault.getAbstractFileByPath(path);
+      if (!(file instanceof import_obsidian6.TFile)) continue;
+      if (file.stat.size > 5e5) {
+        new import_obsidian6.Notice(`${file.name} ist f\xFCr den Chat zu gro\xDF.`);
+        continue;
+      }
+      const fileContent = await this.app.vault.cachedRead(file);
+      content += `
+
+<attached_file path="${file.path}">
+${fileContent}
+</attached_file>`;
+    }
+    this.messages.push({ role: "user", content, displayContent: text });
+    await this.persistHistory();
     await this.continueConversation();
   }
   async continueConversation() {
@@ -536,7 +636,9 @@ ${note}
         const calls = (_a = answer.tool_calls) != null ? _a : [];
         if (!calls.length) {
           typing.remove();
+          this.chatEl.querySelectorAll(".plawe-ai-error").forEach((el) => el.remove());
           await this.addAssistantBubble(answer.content || "Erledigt.");
+          await this.persistHistory();
           return;
         }
         const mutations = calls.filter((call) => MUTATING_TOOLS.has(call.function.name));
@@ -589,7 +691,7 @@ ${note}
     const row = this.chatEl.createDiv({ cls: "plawe-ai-message-row is-assistant" });
     row.createDiv({ cls: "plawe-ai-avatar", text: "P" });
     const bubble = row.createDiv({ cls: "plawe-ai-message is-assistant markdown-rendered" });
-    await import_obsidian5.MarkdownRenderer.render(this.app, text, bubble, "", this);
+    await import_obsidian6.MarkdownRenderer.render(this.app, text, bubble, "", this);
     this.scrollDown();
   }
   addTyping() {
@@ -609,12 +711,11 @@ ${note}
     const card = this.chatEl.createDiv({ cls: "plawe-ai-action" });
     const head = card.createDiv({ cls: "plawe-ai-action-head" });
     const icon = head.createDiv({ cls: "plawe-ai-action-icon" });
-    (0, import_obsidian5.setIcon)(icon, "file-pen-line");
+    (0, import_obsidian6.setIcon)(icon, "file-pen-line");
     const text = head.createDiv();
     text.createDiv({ cls: "plawe-ai-action-title", text: action.title });
     text.createDiv({ cls: "plawe-ai-action-summary", text: action.summary });
-    const content = typeof action.args.content === "string" ? action.args.content : "";
-    if (content) card.createEl("pre", { cls: "plawe-ai-action-preview", text: content.slice(0, 900) });
+    void this.renderActionPreview(card, action);
     const buttons = card.createDiv({ cls: "plawe-ai-action-buttons" });
     const reject = buttons.createEl("button", { text: "Ablehnen" });
     const approve = buttons.createEl("button", { cls: "mod-cta", text: "Ausf\xFChren" });
@@ -634,12 +735,23 @@ ${note}
         cls: `plawe-ai-action-result ${approved ? "is-success" : ""}`,
         text: approved ? `\u2713 ${result}` : "Nicht ausgef\xFChrt"
       });
+      if (approved) {
+        const targetPath = typeof action.args.path === "string" ? action.args.path : typeof action.args.to === "string" ? action.args.to : "";
+        const target = targetPath ? this.app.vault.getAbstractFileByPath(
+          targetPath.toLocaleLowerCase().endsWith(".md") ? targetPath : `${targetPath}.md`
+        ) : null;
+        if (target instanceof import_obsidian6.TFile) {
+          const openButton = card.createEl("button", { cls: "plawe-ai-open-note", text: "Notiz \xF6ffnen" });
+          openButton.addEventListener("click", () => void this.app.workspace.getLeaf(false).openFile(target));
+        }
+      }
       this.messages.push({
         role: "tool",
         tool_call_id: action.call.id,
         name: action.call.function.name,
         content: result
       });
+      await this.persistHistory();
     } catch (error) {
       const message = `Fehler: ${this.errorText(error)}`;
       card.createDiv({ cls: "plawe-ai-action-result is-error", text: message });
@@ -653,6 +765,7 @@ ${note}
     if (this.pending.size === 0) await this.continueConversation();
   }
   addError(text) {
+    this.chatEl.querySelectorAll(".plawe-ai-error").forEach((el) => el.remove());
     const error = this.chatEl.createDiv({ cls: "plawe-ai-error" });
     error.createDiv({ text });
     const settings = error.createEl("button", { text: "Einstellungen \xF6ffnen" });
@@ -674,6 +787,70 @@ ${note}
   errorText(error) {
     return error instanceof Error ? error.message : String(error);
   }
+  openFilePicker() {
+    new PlaweFilePicker(this.app, this.attachedPaths, (paths) => {
+      this.attachedPaths = paths;
+      this.renderAttachments();
+    }).open();
+  }
+  renderAttachments() {
+    if (!this.attachmentsEl) return;
+    this.attachmentsEl.empty();
+    this.attachmentsEl.toggleClass("is-empty", this.attachedPaths.length === 0);
+    for (const path of this.attachedPaths) {
+      const file = this.app.vault.getAbstractFileByPath(path);
+      if (!(file instanceof import_obsidian6.TFile)) continue;
+      const chip = this.attachmentsEl.createDiv({ cls: "plawe-ai-attachment-chip" });
+      const icon = chip.createSpan();
+      (0, import_obsidian6.setIcon)(icon, "file-text");
+      chip.createSpan({ cls: "plawe-ai-attachment-name", text: file.basename });
+      const remove = chip.createEl("button", { attr: { "aria-label": `${file.basename} entfernen` } });
+      (0, import_obsidian6.setIcon)(remove, "x");
+      remove.addEventListener("click", () => {
+        this.attachedPaths = this.attachedPaths.filter((item) => item !== path);
+        this.renderAttachments();
+      });
+    }
+  }
+  async restoreHistory() {
+    var _a;
+    this.messages = ((_a = this.plugin.settings.chatHistory) != null ? _a : []).slice(-60);
+    const visible = this.messages.filter(
+      (message) => {
+        var _a2;
+        return (message.role === "user" || message.role === "assistant") && message.content && !((_a2 = message.tool_calls) == null ? void 0 : _a2.length);
+      }
+    );
+    if (!visible.length) {
+      this.renderWelcome();
+      return;
+    }
+    for (const message of visible) {
+      if (message.role === "user") this.addUserBubble(message.displayContent || message.content || "");
+      else await this.addAssistantBubble(message.content || "");
+    }
+  }
+  async persistHistory() {
+    this.plugin.settings.chatHistory = this.messages.slice(-60);
+    await this.plugin.saveSettings();
+  }
+  async renderActionPreview(card, action) {
+    const content = typeof action.args.content === "string" ? action.args.content : "";
+    if (!content) return;
+    const path = typeof action.args.path === "string" ? action.args.path : "";
+    const existing = path ? this.app.vault.getAbstractFileByPath(path) : null;
+    const before = existing instanceof import_obsidian6.TFile ? await this.app.vault.cachedRead(existing) : "";
+    const preview = card.createDiv({ cls: "plawe-ai-change-preview" });
+    if (before) {
+      const oldBlock = preview.createDiv({ cls: "plawe-ai-change-block is-before" });
+      oldBlock.createDiv({ cls: "plawe-ai-change-label", text: "Vorher" });
+      oldBlock.createEl("pre", { text: before.slice(0, 1200) });
+    }
+    const afterBlock = preview.createDiv({ cls: "plawe-ai-change-block is-after" });
+    afterBlock.createDiv({ cls: "plawe-ai-change-label", text: before ? "Nachher" : "Inhalt" });
+    const after = action.call.function.name === "append_note" && before ? `${before}${before.endsWith("\n") ? "" : "\n"}${content}` : content;
+    afterBlock.createEl("pre", { text: after.slice(0, 1200) });
+  }
 };
 
 // src/main.ts
@@ -682,9 +859,10 @@ var DEFAULT_SETTINGS = {
   model: "openai/gpt-4.1-mini",
   endpoint: "https://openrouter.ai/api/v1/chat/completions",
   systemPrompt: "",
-  maxToolRounds: 8
+  maxToolRounds: 8,
+  chatHistory: []
 };
-var PlaweAIPlugin = class extends import_obsidian6.Plugin {
+var PlaweAIPlugin = class extends import_obsidian7.Plugin {
   constructor() {
     super(...arguments);
     this.settings = DEFAULT_SETTINGS;
@@ -708,7 +886,7 @@ var PlaweAIPlugin = class extends import_obsidian6.Plugin {
     var _a;
     let leaf = (_a = this.app.workspace.getLeavesOfType(PLAWE_AI_VIEW)[0]) != null ? _a : null;
     if (!leaf) {
-      leaf = import_obsidian6.Platform.isMobile ? this.app.workspace.getLeaf("tab") : this.app.workspace.getRightLeaf(false);
+      leaf = import_obsidian7.Platform.isMobile ? this.app.workspace.getLeaf("tab") : this.app.workspace.getRightLeaf(false);
       if (!leaf) return;
       await leaf.setViewState({ type: PLAWE_AI_VIEW, active: true });
     }

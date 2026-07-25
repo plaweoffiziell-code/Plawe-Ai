@@ -725,7 +725,7 @@ var PlaweAIPlugin = class extends import_obsidian6.Plugin {
     var _a;
     let leaf = (_a = this.app.workspace.getLeavesOfType(PLAWE_AI_VIEW)[0]) != null ? _a : null;
     if (!leaf) {
-      leaf = this.app.workspace.getRightLeaf(false);
+      leaf = import_obsidian6.Platform.isMobile ? this.app.workspace.getLeaf("tab") : this.app.workspace.getRightLeaf(false);
       if (!leaf) return;
       await leaf.setViewState({ type: PLAWE_AI_VIEW, active: true });
     }

@@ -1,0 +1,39 @@
+name: Publish Obsidian plugin release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/release.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Read plugin version
+        id: version
+        shell: bash
+        run: echo "version=$(jq -r '.version' manifest.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Create release with BRAT assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            echo "Release $VERSION already exists."
+            exit 0
+          fi
+          gh release create "$VERSION" \
+            manifest.json main.js styles.css \
+            --title "$VERSION" \
+            --notes "Plawe AI $VERSION – first mobile beta release."

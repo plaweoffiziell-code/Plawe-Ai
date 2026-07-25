@@ -7,9 +7,6 @@ on:
       - main
     paths:
       - ".github/workflows/release.yml"
-      - "manifest.json"
-      - "main.js"
-      - "styles.css"
 
 permissions:
   contents: write
@@ -20,12 +17,10 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
       - name: Read plugin version
         id: version
         shell: bash
         run: echo "version=$(jq -r '.version' manifest.json)" >> "$GITHUB_OUTPUT"
-
       - name: Create release with BRAT assets
         env:
           GH_TOKEN: ${{ github.token }}
@@ -39,4 +34,4 @@ jobs:
           gh release create "$VERSION" \
             manifest.json main.js styles.css \
             --title "$VERSION" \
-            --notes "Plawe AI $VERSION – refined mobile fullscreen layout."
+            --notes "Plawe AI $VERSION – refined mobile layout."

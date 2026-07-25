@@ -7,6 +7,9 @@ on:
       - main
     paths:
       - ".github/workflows/release.yml"
+      - "manifest.json"
+      - "main.js"
+      - "styles.css"
 
 permissions:
   contents: write
@@ -34,4 +37,4 @@ jobs:
           gh release create "$VERSION" \
             manifest.json main.js styles.css \
             --title "$VERSION" \
-            --notes "Plawe AI $VERSION – refined mobile layout."
+            --notes "Plawe AI $VERSION – cleaner mobile layout and safe composer spacing."

@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/release.yml"
+      - "manifest.json"
+      - "main.js"
+      - "styles.css"
 permissions:
   contents: write
 jobs:
@@ -19,4 +22,4 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           if gh release view "$VERSION" >/dev/null 2>&1; then exit 0; fi
-          gh release create "$VERSION" manifest.json main.js styles.css --title "$VERSION" --notes "Plawe AI $VERSION – Pomme Notes-inspired Liquid Glass design."
+          gh release create "$VERSION" manifest.json main.js styles.css --title "$VERSION" --notes "Plawe AI $VERSION – Pomme Notes-inspired Liquid Glass design with a floating composer dock, softer controls and improved mobile spacing."

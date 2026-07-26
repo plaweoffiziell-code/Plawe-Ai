@@ -90,6 +90,12 @@
   display: flex;
   gap: 9px;
   margin: 0 0 15px;
+  animation: plawe-message-in 180ms ease-out both;
+}
+
+@keyframes plawe-message-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .plawe-ai-message-row.is-user {
@@ -188,6 +194,12 @@
   background: var(--background-secondary);
   color: var(--text-muted);
   font-size: 11px;
+  transition: transform 120ms ease, background-color 140ms ease, border-color 140ms ease;
+}
+
+.plawe-ai-context-button:active,
+.plawe-ai-file-row:active {
+  transform: scale(.97);
 }
 
 .plawe-ai-attachments {
@@ -215,6 +227,12 @@
   background: var(--background-secondary);
   color: var(--text-muted);
   font-size: 11px;
+  animation: plawe-chip-in 150ms ease-out both;
+}
+
+@keyframes plawe-chip-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .plawe-ai-attachment-name {
@@ -288,10 +306,23 @@
   border-radius: 13px;
   background: var(--plawe-accent);
   color: var(--text-on-accent);
+  transition: transform 120ms ease, opacity 120ms ease, background-color 120ms ease;
+}
+
+.plawe-ai-send:not(:disabled):active {
+  transform: scale(.92);
 }
 
 .plawe-ai-send:disabled {
-  opacity: .45;
+  opacity: .72;
+}
+
+.plawe-ai-send.is-loading svg {
+  animation: plawe-spin .8s linear infinite;
+}
+
+@keyframes plawe-spin {
+  to { transform: rotate(360deg); }
 }
 
 .plawe-ai-action {
@@ -300,6 +331,12 @@
   border: 1px solid var(--background-modifier-border);
   border-radius: 14px;
   background: var(--background-secondary);
+  animation: plawe-card-in 200ms ease-out both;
+}
+
+@keyframes plawe-card-in {
+  from { opacity: 0; transform: translateY(6px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .plawe-ai-action-head {
@@ -451,6 +488,7 @@
   background: transparent;
   color: var(--text-normal);
   text-align: left;
+  transition: transform 100ms ease, background-color 130ms ease;
 }
 
 .plawe-ai-file-row.is-selected {
@@ -512,6 +550,20 @@
 .plawe-ai-file-empty {
   color: var(--text-muted);
   font-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plawe-ai-message-row,
+  .plawe-ai-action,
+  .plawe-ai-attachment-chip {
+    animation: none;
+  }
+
+  .plawe-ai-send,
+  .plawe-ai-context-button,
+  .plawe-ai-file-row {
+    transition: none;
+  }
 }
 
 .plawe-ai-action-buttons {

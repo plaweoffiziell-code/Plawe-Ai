@@ -533,7 +533,8 @@ var PlaweAIView = class extends import_obsidian6.ItemView {
     this.chatEl = root.createDiv({ cls: "plawe-ai-chat" });
     await this.restoreHistory();
     const composer = root.createDiv({ cls: "plawe-ai-composer-wrap" });
-    const contextRow = composer.createDiv({ cls: "plawe-ai-context-row" });
+    const dock = composer.createDiv({ cls: "plawe-ai-dock" });
+    const contextRow = dock.createDiv({ cls: "plawe-ai-context-row" });
     const addButton = contextRow.createEl("button", { cls: "plawe-ai-context-button" });
     const addIcon = addButton.createSpan();
     (0, import_obsidian6.setIcon)(addIcon, "plus");
@@ -544,9 +545,9 @@ var PlaweAIView = class extends import_obsidian6.ItemView {
     (0, import_obsidian6.setIcon)(contextIcon, "file-text");
     contextButton.createSpan({ text: "Aktuelle Notiz" });
     contextButton.addEventListener("click", () => this.toggleCurrentNote(contextButton));
-    this.attachmentsEl = composer.createDiv({ cls: "plawe-ai-attachments" });
+    this.attachmentsEl = dock.createDiv({ cls: "plawe-ai-attachments" });
     this.renderAttachments();
-    const composerBox = composer.createDiv({ cls: "plawe-ai-composer" });
+    const composerBox = dock.createDiv({ cls: "plawe-ai-composer" });
     this.inputEl = composerBox.createEl("textarea", {
       cls: "plawe-ai-input",
       attr: {

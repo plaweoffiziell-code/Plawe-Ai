@@ -103,19 +103,20 @@ var import_obsidian6 = require("obsidian");
 var import_obsidian3 = require("obsidian");
 var SUPPORTED_EXTENSIONS = /* @__PURE__ */ new Set(["md", "txt", "csv", "json", "yaml", "yml"]);
 var PlaweFilePicker = class extends import_obsidian3.Modal {
-  constructor(app, selectedPaths, onDone) {
+  constructor(app, selectedPaths, onDone, onDismiss) {
     super(app);
     this.query = "";
     this.renderFrame = null;
     this.selected = new Set(selectedPaths);
     this.onDone = onDone;
+    this.onDismiss = onDismiss;
   }
   onOpen() {
     const { contentEl, modalEl } = this;
     modalEl.addClass("plawe-ai-file-modal");
     contentEl.empty();
     const header = contentEl.createDiv({ cls: "plawe-ai-file-modal-header" });
-    header.createEl("h2", { text: "Dateien hinzuf\xFCgen" });
+    header.createEl("h2", { text: "Dateien" });
     header.createEl("p", { text: "Notizen und Textdateien als Kontext ausw\xE4hlen." });
     const searchWrap = contentEl.createDiv({ cls: "plawe-ai-file-search" });
     const icon = searchWrap.createSpan();
@@ -145,7 +146,7 @@ var PlaweFilePicker = class extends import_obsidian3.Modal {
       this.close();
     });
     this.modalEl.addEventListener("plawe-selection-change", updateCount);
-    window.setTimeout(() => input.focus(), 50);
+    if (!import_obsidian3.Platform.isMobile) window.setTimeout(() => input.focus(), 50);
   }
   renderList() {
     this.listEl.empty();
@@ -180,6 +181,7 @@ var PlaweFilePicker = class extends import_obsidian3.Modal {
   }
   onClose() {
     if (this.renderFrame !== null) window.cancelAnimationFrame(this.renderFrame);
+    this.onDismiss();
     this.contentEl.empty();
   }
 };
@@ -819,10 +821,21 @@ ${attachmentContents[index]}
     return error instanceof Error ? error.message : String(error);
   }
   openFilePicker() {
-    new PlaweFilePicker(this.app, this.attachedPaths, (paths) => {
-      this.attachedPaths = paths;
-      this.renderAttachments();
-    }).open();
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) active.blur();
+    this.inputEl.blur();
+    this.chatEl.addClass("is-file-picker-open");
+    window.setTimeout(() => {
+      new PlaweFilePicker(
+        this.app,
+        this.attachedPaths,
+        (paths) => {
+          this.attachedPaths = paths;
+          this.renderAttachments();
+        },
+        () => this.chatEl.removeClass("is-file-picker-open")
+      ).open();
+    }, 120);
   }
   renderAttachments() {
     if (!this.attachmentsEl) return;

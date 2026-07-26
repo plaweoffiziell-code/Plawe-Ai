@@ -106,6 +106,7 @@ var PlaweFilePicker = class extends import_obsidian3.Modal {
   constructor(app, selectedPaths, onDone) {
     super(app);
     this.query = "";
+    this.renderFrame = null;
     this.selected = new Set(selectedPaths);
     this.onDone = onDone;
   }
@@ -126,7 +127,11 @@ var PlaweFilePicker = class extends import_obsidian3.Modal {
     });
     input.addEventListener("input", () => {
       this.query = input.value.toLocaleLowerCase();
-      this.renderList();
+      if (this.renderFrame !== null) window.cancelAnimationFrame(this.renderFrame);
+      this.renderFrame = window.requestAnimationFrame(() => {
+        this.renderFrame = null;
+        this.renderList();
+      });
     });
     this.listEl = contentEl.createDiv({ cls: "plawe-ai-file-list" });
     this.renderList();
@@ -172,6 +177,10 @@ var PlaweFilePicker = class extends import_obsidian3.Modal {
       refresh();
       this.modalEl.dispatchEvent(new Event("plawe-selection-change"));
     });
+  }
+  onClose() {
+    if (this.renderFrame !== null) window.cancelAnimationFrame(this.renderFrame);
+    this.contentEl.empty();
   }
 };
 
@@ -377,15 +386,21 @@ async function runReadTool(app, call) {
     const query = asString(args.query, "query").toLocaleLowerCase();
     const limit = Math.min(Math.max(Number(args.limit) || 15, 1), 30);
     const matches = [];
-    for (const file of app.vault.getMarkdownFiles()) {
-      if (matches.length >= limit) break;
-      const content = await app.vault.cachedRead(file);
-      const haystack = `${file.path}
+    const files = app.vault.getMarkdownFiles();
+    const batchSize = 12;
+    for (let offset = 0; offset < files.length && matches.length < limit; offset += batchSize) {
+      const batch = files.slice(offset, offset + batchSize);
+      const contents = await Promise.all(batch.map((file) => app.vault.cachedRead(file)));
+      for (let batchIndex = 0; batchIndex < batch.length && matches.length < limit; batchIndex++) {
+        const file = batch[batchIndex];
+        const content = contents[batchIndex];
+        const haystack = `${file.path}
 ${content}`.toLocaleLowerCase();
-      const index = haystack.indexOf(query);
-      if (index >= 0) {
-        const start = Math.max(0, index - 100);
-        matches.push({ path: file.path, excerpt: haystack.slice(start, start + 280) });
+        const index = haystack.indexOf(query);
+        if (index >= 0) {
+          const start = Math.max(0, index - 100);
+          matches.push({ path: file.path, excerpt: haystack.slice(start, start + 280) });
+        }
       }
     }
     return JSON.stringify({ matches });
@@ -484,6 +499,8 @@ var PlaweAIView = class extends import_obsidian6.ItemView {
     this.attachedPaths = [];
     this.busy = false;
     this.pending = /* @__PURE__ */ new Map();
+    this.persistTimer = null;
+    this.scrollFrame = null;
     this.plugin = plugin;
   }
   getViewType() {
@@ -550,6 +567,11 @@ var PlaweAIView = class extends import_obsidian6.ItemView {
     (0, import_obsidian6.setIcon)(this.sendButton, "arrow-up");
     this.sendButton.addEventListener("click", () => void this.send());
   }
+  async onClose() {
+    if (this.persistTimer !== null) window.clearTimeout(this.persistTimer);
+    if (this.scrollFrame !== null) window.cancelAnimationFrame(this.scrollFrame);
+    await this.persistHistory();
+  }
   focusInput() {
     window.setTimeout(() => {
       var _a;
@@ -566,7 +588,7 @@ var PlaweAIView = class extends import_obsidian6.ItemView {
     this.pending.clear();
     this.chatEl.empty();
     this.renderWelcome();
-    void this.persistHistory();
+    this.queuePersistHistory();
     this.focusInput();
   }
   toggleCurrentNote(button) {
@@ -607,22 +629,25 @@ var PlaweAIView = class extends import_obsidian6.ItemView {
 ${note}
 </current_note>`;
     }
-    for (const path of this.attachedPaths) {
-      const file = this.app.vault.getAbstractFileByPath(path);
-      if (!(file instanceof import_obsidian6.TFile)) continue;
-      if (file.stat.size > 5e5) {
-        new import_obsidian6.Notice(`${file.name} ist f\xFCr den Chat zu gro\xDF.`);
-        continue;
-      }
-      const fileContent = await this.app.vault.cachedRead(file);
+    const attachmentFiles = this.attachedPaths.map((path) => this.app.vault.getAbstractFileByPath(path)).filter((file) => file instanceof import_obsidian6.TFile);
+    const readableFiles = attachmentFiles.filter((file) => {
+      if (file.stat.size <= 5e5) return true;
+      new import_obsidian6.Notice(`${file.name} ist f\xFCr den Chat zu gro\xDF.`);
+      return false;
+    });
+    const attachmentContents = await Promise.all(
+      readableFiles.map((file) => this.app.vault.cachedRead(file))
+    );
+    for (let index = 0; index < readableFiles.length; index++) {
+      const file = readableFiles[index];
       content += `
 
 <attached_file path="${file.path}">
-${fileContent}
+${attachmentContents[index]}
 </attached_file>`;
     }
     this.messages.push({ role: "user", content, displayContent: text });
-    await this.persistHistory();
+    this.queuePersistHistory();
     await this.continueConversation();
   }
   async continueConversation() {
@@ -638,7 +663,7 @@ ${fileContent}
           typing.remove();
           this.chatEl.querySelectorAll(".plawe-ai-error").forEach((el) => el.remove());
           await this.addAssistantBubble(answer.content || "Erledigt.");
-          await this.persistHistory();
+          this.queuePersistHistory();
           return;
         }
         const mutations = calls.filter((call) => MUTATING_TOOLS.has(call.function.name));
@@ -751,7 +776,7 @@ ${fileContent}
         name: action.call.function.name,
         content: result
       });
-      await this.persistHistory();
+      this.queuePersistHistory();
     } catch (error) {
       const message = `Fehler: ${this.errorText(error)}`;
       card.createDiv({ cls: "plawe-ai-action-result is-error", text: message });
@@ -780,9 +805,15 @@ ${fileContent}
     this.busy = value;
     this.sendButton.disabled = value;
     this.inputEl.disabled = value;
+    this.sendButton.toggleClass("is-loading", value);
+    (0, import_obsidian6.setIcon)(this.sendButton, value ? "loader-circle" : "arrow-up");
   }
   scrollDown() {
-    window.setTimeout(() => this.chatEl.scrollTo({ top: this.chatEl.scrollHeight, behavior: "smooth" }), 20);
+    if (this.scrollFrame !== null) window.cancelAnimationFrame(this.scrollFrame);
+    this.scrollFrame = window.requestAnimationFrame(() => {
+      this.scrollFrame = null;
+      this.chatEl.scrollTop = this.chatEl.scrollHeight;
+    });
   }
   errorText(error) {
     return error instanceof Error ? error.message : String(error);
@@ -833,6 +864,13 @@ ${fileContent}
   async persistHistory() {
     this.plugin.settings.chatHistory = this.messages.slice(-60);
     await this.plugin.saveSettings();
+  }
+  queuePersistHistory() {
+    if (this.persistTimer !== null) window.clearTimeout(this.persistTimer);
+    this.persistTimer = window.setTimeout(() => {
+      this.persistTimer = null;
+      void this.persistHistory();
+    }, 300);
   }
   async renderActionPreview(card, action) {
     const content = typeof action.args.content === "string" ? action.args.content : "";

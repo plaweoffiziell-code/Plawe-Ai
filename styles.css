@@ -6,6 +6,12 @@
 .plawe-ai-view {
   --plawe-accent: var(--interactive-accent);
   --plawe-soft: color-mix(in srgb, var(--interactive-accent) 13%, transparent);
+  --plawe-glass: color-mix(in srgb, var(--background-secondary) 74%, transparent);
+  --plawe-glass-strong: color-mix(in srgb, var(--background-secondary) 88%, transparent);
+  --plawe-glass-edge:
+    inset 1px 1px .5px rgba(255, 255, 255, .14),
+    inset -1px -1px .5px rgba(255, 255, 255, .06),
+    0 8px 30px rgba(0, 0, 0, .18);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -176,10 +182,29 @@
   background: linear-gradient(to bottom, transparent, var(--background-primary) 18px);
 }
 
+.plawe-ai-dock {
+  padding: 7px;
+  border: 1px solid color-mix(in srgb, var(--text-normal) 11%, transparent);
+  border-radius: 24px;
+  background: var(--plawe-glass);
+  box-shadow: var(--plawe-glass-edge);
+  backdrop-filter: blur(18px) saturate(155%);
+  -webkit-backdrop-filter: blur(18px) saturate(155%);
+  transition: border-color 180ms ease, box-shadow 220ms ease, transform 180ms ease;
+}
+
+.plawe-ai-dock:focus-within {
+  border-color: color-mix(in srgb, var(--plawe-accent) 32%, transparent);
+  box-shadow:
+    inset 1px 1px .5px rgba(255, 255, 255, .16),
+    0 10px 34px rgba(0, 0, 0, .22),
+    0 0 0 3px color-mix(in srgb, var(--plawe-accent) 8%, transparent);
+}
+
 .plawe-ai-context-row {
   display: flex;
   gap: 8px;
-  margin: 0 8px 6px;
+  margin: 0 2px 7px;
 }
 
 .plawe-ai-context-button {
@@ -189,11 +214,14 @@
   min-height: 29px;
   max-width: 75%;
   padding: 4px 9px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 9px;
-  background: var(--background-secondary);
+  border: 1px solid color-mix(in srgb, var(--text-normal) 10%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--background-primary) 38%, transparent);
   color: var(--text-muted);
   font-size: 11px;
+  box-shadow: inset 1px 1px .5px rgba(255, 255, 255, .08);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
   transition: transform 120ms ease, background-color 140ms ease, border-color 140ms ease;
 }
 
@@ -205,7 +233,7 @@
 .plawe-ai-attachments {
   display: flex;
   gap: 6px;
-  margin: 0 3px 7px;
+  margin: 0 2px 7px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -222,9 +250,9 @@
   min-height: 31px;
   max-width: 190px;
   padding: 4px 5px 4px 9px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 10px;
-  background: var(--background-secondary);
+  border: 1px solid color-mix(in srgb, var(--text-normal) 10%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--background-primary) 38%, transparent);
   color: var(--text-muted);
   font-size: 11px;
   animation: plawe-chip-in 150ms ease-out both;
@@ -269,15 +297,19 @@
   align-items: flex-end;
   gap: 8px;
   padding: 6px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 16px;
-  background: var(--background-secondary);
-  box-shadow: 0 5px 22px rgba(0, 0, 0, .08);
+  border: 1px solid color-mix(in srgb, var(--text-normal) 12%, transparent);
+  border-radius: 18px;
+  background: var(--plawe-glass-strong);
+  box-shadow:
+    inset 1px 1px .5px rgba(255, 255, 255, .1),
+    0 2px 10px rgba(0, 0, 0, .08);
+  backdrop-filter: blur(12px) saturate(145%);
+  -webkit-backdrop-filter: blur(12px) saturate(145%);
 }
 
 .plawe-ai-composer:focus-within {
   border-color: color-mix(in srgb, var(--plawe-accent) 72%, var(--background-modifier-border));
-  box-shadow: 0 0 0 3px var(--plawe-soft);
+  box-shadow: 0 0 0 2px var(--plawe-soft);
 }
 
 .plawe-ai-input {
@@ -431,6 +463,12 @@
 .plawe-ai-file-modal {
   width: min(620px, calc(100vw - 24px));
   max-height: min(760px, calc(100vh - 48px));
+  background: var(--plawe-glass-strong, color-mix(in srgb, var(--background-secondary) 90%, transparent));
+  box-shadow:
+    inset 1px 1px .5px rgba(255, 255, 255, .12),
+    0 18px 60px rgba(0, 0, 0, .38);
+  backdrop-filter: blur(24px) saturate(155%);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
 }
 
 .plawe-ai-chat.is-file-picker-open {
@@ -710,7 +748,27 @@
   }
 
   .plawe-ai-composer-wrap {
-    padding: 7px 9px calc(82px + env(safe-area-inset-bottom));
+    padding: 8px 10px calc(82px + env(safe-area-inset-bottom));
+    background: linear-gradient(to bottom, transparent, var(--background-primary) 24px);
+  }
+
+  .plawe-ai-dock {
+    padding: 6px;
+    border-radius: 25px;
+  }
+
+  .plawe-ai-context-row {
+    margin-bottom: 6px;
+  }
+
+  .plawe-ai-context-button {
+    min-height: 32px;
+    padding-inline: 11px;
+    border-radius: 16px;
+  }
+
+  .plawe-ai-composer {
+    border-radius: 20px;
   }
 
   .plawe-ai-welcome {

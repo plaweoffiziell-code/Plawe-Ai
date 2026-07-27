@@ -499,6 +499,7 @@ var PlaweAIView = class extends import_obsidian6.ItemView {
     this.messages = [];
     this.contextFile = null;
     this.attachedPaths = [];
+    this.uploadedAttachments = [];
     this.busy = false;
     this.pending = /* @__PURE__ */ new Map();
     this.persistTimer = null;
@@ -538,13 +539,28 @@ var PlaweAIView = class extends import_obsidian6.ItemView {
     const addButton = contextRow.createEl("button", { cls: "plawe-ai-context-button" });
     const addIcon = addButton.createSpan();
     (0, import_obsidian6.setIcon)(addIcon, "plus");
-    addButton.createSpan({ text: "Dateien" });
+    addButton.createSpan({ text: "Notizen" });
     addButton.addEventListener("click", () => this.openFilePicker());
+    const uploadButton = contextRow.createEl("button", { cls: "plawe-ai-context-button" });
+    const uploadIcon = uploadButton.createSpan();
+    (0, import_obsidian6.setIcon)(uploadIcon, "paperclip");
+    uploadButton.createSpan({ text: "Upload" });
+    uploadButton.addEventListener("click", () => this.openUploadPicker());
     const contextButton = contextRow.createEl("button", { cls: "plawe-ai-context-button" });
     const contextIcon = contextButton.createSpan();
     (0, import_obsidian6.setIcon)(contextIcon, "file-text");
     contextButton.createSpan({ text: "Aktuelle Notiz" });
     contextButton.addEventListener("click", () => this.toggleCurrentNote(contextButton));
+    this.uploadInput = dock.createEl("input", {
+      cls: "plawe-ai-upload-input",
+      type: "file",
+      attr: {
+        accept: "image/png,image/jpeg,image/webp,image/gif,application/pdf,.txt,.md,.csv,.json,.yaml,.yml",
+        multiple: "true",
+        "aria-label": "Bilder oder Dateien ausw\xE4hlen"
+      }
+    });
+    this.uploadInput.addEventListener("change", () => void this.handleUploads());
     this.attachmentsEl = dock.createDiv({ cls: "plawe-ai-attachments" });
     this.renderAttachments();
     const composerBox = dock.createDiv({ cls: "plawe-ai-composer" });
@@ -613,17 +629,18 @@ var PlaweAIView = class extends import_obsidian6.ItemView {
   }
   resizeInput() {
     this.inputEl.style.height = "auto";
-    this.inputEl.style.height = `${Math.min(this.inputEl.scrollHeight, 160)}px`;
+    this.inputEl.style.height = `${Math.min(this.inputEl.scrollHeight, 120)}px`;
   }
   async send() {
     var _a;
     const text = this.inputEl.value.trim();
-    if (!text || this.busy) return;
+    if (!text && !this.attachedPaths.length && !this.uploadedAttachments.length || this.busy) return;
+    const displayText = text || this.attachmentFallbackText();
     this.inputEl.value = "";
     this.resizeInput();
     (_a = this.chatEl.querySelector(".plawe-ai-welcome")) == null ? void 0 : _a.remove();
-    this.addUserBubble(text);
-    let content = text;
+    this.addUserBubble(displayText);
+    let content = text || "Bitte analysiere die angeh\xE4ngten Inhalte.";
     if (this.contextFile) {
       const note = await this.app.vault.cachedRead(this.contextFile);
       content += `
@@ -649,7 +666,23 @@ ${note}
 ${attachmentContents[index]}
 </attached_file>`;
     }
-    this.messages.push({ role: "user", content, displayContent: text });
+    const uploaded = [...this.uploadedAttachments];
+    for (const file of uploaded.filter((attachment) => attachment.kind === "text")) {
+      content += `
+
+<uploaded_file name="${file.name}">
+${file.data}
+</uploaded_file>`;
+    }
+    const multimodal = uploaded.filter((file) => file.kind !== "text");
+    const messageContent = multimodal.length ? [
+      { type: "text", text: content },
+      ...multimodal.map((file) => file.kind === "image" ? { type: "image_url", image_url: { url: file.data } } : { type: "file", file: { filename: file.name, file_data: file.data } })
+    ] : content;
+    this.messages.push({ role: "user", content: messageContent, displayContent: displayText });
+    this.attachedPaths = [];
+    this.uploadedAttachments = [];
+    this.renderAttachments();
     this.queuePersistHistory();
     await this.continueConversation();
   }
@@ -665,7 +698,7 @@ ${attachmentContents[index]}
         if (!calls.length) {
           typing.remove();
           this.chatEl.querySelectorAll(".plawe-ai-error").forEach((el) => el.remove());
-          await this.addAssistantBubble(answer.content || "Erledigt.");
+          await this.addAssistantBubble(this.messageText(answer) || "Erledigt.");
           this.queuePersistHistory();
           return;
         }
@@ -838,10 +871,65 @@ ${attachmentContents[index]}
       ).open();
     }, 120);
   }
+  openUploadPicker() {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) active.blur();
+    this.inputEl.blur();
+    this.uploadInput.value = "";
+    this.uploadInput.click();
+  }
+  async handleUploads() {
+    var _a;
+    const files = Array.from((_a = this.uploadInput.files) != null ? _a : []);
+    for (const file of files) {
+      try {
+        this.uploadedAttachments.push(await this.readUpload(file));
+      } catch (error) {
+        new import_obsidian6.Notice(this.errorText(error));
+      }
+    }
+    this.renderAttachments();
+  }
+  async readUpload(file) {
+    const isImage = ["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.type);
+    const isPdf = file.type === "application/pdf" || file.name.toLocaleLowerCase().endsWith(".pdf");
+    const isText = !isImage && !isPdf && /\.(txt|md|csv|json|ya?ml)$/i.test(file.name);
+    const limit = isImage ? 8e6 : isPdf ? 15e6 : 1e6;
+    if (!isImage && !isPdf && !isText) {
+      throw new Error(`${file.name}: Dieses Dateiformat wird noch nicht unterst\xFCtzt.`);
+    }
+    if (file.size > limit) {
+      throw new Error(`${file.name} ist zu gro\xDF (maximal ${Math.round(limit / 1e6)} MB).`);
+    }
+    const data = isText ? await file.text() : await this.fileAsDataUrl(file);
+    return {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      name: file.name,
+      mimeType: file.type,
+      size: file.size,
+      kind: isImage ? "image" : isPdf ? "pdf" : "text",
+      data
+    };
+  }
+  fileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error(`${file.name} konnte nicht gelesen werden.`));
+      reader.readAsDataURL(file);
+    });
+  }
+  attachmentFallbackText() {
+    const count = this.attachedPaths.length + this.uploadedAttachments.length;
+    return count === 1 ? "Anhang gesendet" : `${count} Anh\xE4nge gesendet`;
+  }
   renderAttachments() {
     if (!this.attachmentsEl) return;
     this.attachmentsEl.empty();
-    this.attachmentsEl.toggleClass("is-empty", this.attachedPaths.length === 0);
+    this.attachmentsEl.toggleClass(
+      "is-empty",
+      this.attachedPaths.length === 0 && this.uploadedAttachments.length === 0
+    );
     for (const path of this.attachedPaths) {
       const file = this.app.vault.getAbstractFileByPath(path);
       if (!(file instanceof import_obsidian6.TFile)) continue;
@@ -853,6 +941,18 @@ ${attachmentContents[index]}
       (0, import_obsidian6.setIcon)(remove, "x");
       remove.addEventListener("click", () => {
         this.attachedPaths = this.attachedPaths.filter((item) => item !== path);
+        this.renderAttachments();
+      });
+    }
+    for (const attachment of this.uploadedAttachments) {
+      const chip = this.attachmentsEl.createDiv({ cls: "plawe-ai-attachment-chip" });
+      const icon = chip.createSpan();
+      (0, import_obsidian6.setIcon)(icon, attachment.kind === "image" ? "image" : attachment.kind === "pdf" ? "file-type-2" : "file-text");
+      chip.createSpan({ cls: "plawe-ai-attachment-name", text: attachment.name });
+      const remove = chip.createEl("button", { attr: { "aria-label": `${attachment.name} entfernen` } });
+      (0, import_obsidian6.setIcon)(remove, "x");
+      remove.addEventListener("click", () => {
+        this.uploadedAttachments = this.uploadedAttachments.filter((item) => item.id !== attachment.id);
         this.renderAttachments();
       });
     }
@@ -871,12 +971,25 @@ ${attachmentContents[index]}
       return;
     }
     for (const message of visible) {
-      if (message.role === "user") this.addUserBubble(message.displayContent || message.content || "");
-      else await this.addAssistantBubble(message.content || "");
+      if (message.role === "user") this.addUserBubble(message.displayContent || this.messageText(message));
+      else await this.addAssistantBubble(this.messageText(message));
     }
   }
+  messageText(message) {
+    if (typeof message.content === "string") return message.content;
+    if (!Array.isArray(message.content)) return "";
+    const text = message.content.find((part) => part.type === "text");
+    return (text == null ? void 0 : text.type) === "text" ? text.text : "";
+  }
   async persistHistory() {
-    this.plugin.settings.chatHistory = this.messages.slice(-60);
+    this.plugin.settings.chatHistory = this.messages.slice(-60).map((message) => {
+      if (!Array.isArray(message.content)) return message;
+      const text = message.content.find((part) => part.type === "text");
+      return {
+        ...message,
+        content: (text == null ? void 0 : text.type) === "text" ? text.text : message.displayContent || "Anhang"
+      };
+    });
     await this.plugin.saveSettings();
   }
   queuePersistHistory() {

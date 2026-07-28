@@ -504,6 +504,7 @@ var PlaweAIView = class extends import_obsidian6.ItemView {
     this.pending = /* @__PURE__ */ new Map();
     this.persistTimer = null;
     this.scrollFrame = null;
+    this.resizeFrame = null;
     this.plugin = plugin;
   }
   getViewType() {
@@ -572,7 +573,7 @@ var PlaweAIView = class extends import_obsidian6.ItemView {
         "aria-label": "Nachricht an Plawe AI"
       }
     });
-    this.inputEl.addEventListener("input", () => this.resizeInput());
+    this.inputEl.addEventListener("input", () => this.scheduleInputResize());
     this.inputEl.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
         event.preventDefault();
@@ -589,6 +590,7 @@ var PlaweAIView = class extends import_obsidian6.ItemView {
   async onClose() {
     if (this.persistTimer !== null) window.clearTimeout(this.persistTimer);
     if (this.scrollFrame !== null) window.cancelAnimationFrame(this.scrollFrame);
+    if (this.resizeFrame !== null) window.cancelAnimationFrame(this.resizeFrame);
     await this.persistHistory();
   }
   focusInput() {
@@ -629,7 +631,15 @@ var PlaweAIView = class extends import_obsidian6.ItemView {
   }
   resizeInput() {
     this.inputEl.style.height = "auto";
-    this.inputEl.style.height = `${Math.min(this.inputEl.scrollHeight, 120)}px`;
+    const nextHeight = Math.min(this.inputEl.scrollHeight, 120);
+    this.inputEl.style.height = `${nextHeight}px`;
+  }
+  scheduleInputResize() {
+    if (this.resizeFrame !== null) return;
+    this.resizeFrame = window.requestAnimationFrame(() => {
+      this.resizeFrame = null;
+      this.resizeInput();
+    });
   }
   async send() {
     var _a;

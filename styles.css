@@ -184,21 +184,18 @@
 
 .plawe-ai-dock {
   padding: 5px;
-  border: 1px solid color-mix(in srgb, var(--text-normal) 11%, transparent);
+  border: 1px solid transparent;
   border-radius: 20px;
-  background: var(--plawe-glass);
-  box-shadow: var(--plawe-glass-edge);
-  backdrop-filter: blur(18px) saturate(155%);
-  -webkit-backdrop-filter: blur(18px) saturate(155%);
+  background: var(--background-primary);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   transition: border-color 180ms ease, box-shadow 220ms ease, transform 180ms ease;
 }
 
 .plawe-ai-dock:focus-within {
-  border-color: color-mix(in srgb, var(--plawe-accent) 32%, transparent);
-  box-shadow:
-    inset 1px 1px .5px rgba(255, 255, 255, .16),
-    0 10px 34px rgba(0, 0, 0, .22),
-    0 0 0 3px color-mix(in srgb, var(--plawe-accent) 8%, transparent);
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .plawe-ai-context-row {
@@ -763,8 +760,8 @@
   }
 
   .plawe-ai-dock:focus-within {
-    background: var(--background-secondary);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--plawe-accent) 24%, transparent);
+    background: var(--background-primary);
+    box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }

@@ -548,10 +548,20 @@ var PlaweAIView = class extends import_obsidian6.ItemView {
     uploadButton.createSpan({ text: "Upload" });
     uploadButton.addEventListener("click", () => this.openUploadPicker());
     const contextButton = contextRow.createEl("button", { cls: "plawe-ai-context-button" });
+    this.currentNoteButton = contextButton;
     const contextIcon = contextButton.createSpan();
     (0, import_obsidian6.setIcon)(contextIcon, "file-text");
     contextButton.createSpan({ text: "Aktuelle Notiz" });
     contextButton.addEventListener("click", () => this.toggleCurrentNote(contextButton));
+    const newChatButton = contextRow.createEl("button", {
+      cls: "plawe-ai-context-button plawe-ai-new-chat",
+      attr: {
+        "aria-label": "Neuen Chat starten",
+        title: "Neuer Chat"
+      }
+    });
+    (0, import_obsidian6.setIcon)(newChatButton, "square-pen");
+    newChatButton.addEventListener("click", () => this.resetChat());
     this.uploadInput = dock.createEl("input", {
       cls: "plawe-ai-upload-input",
       type: "file",
@@ -604,9 +614,18 @@ var PlaweAIView = class extends import_obsidian6.ItemView {
     welcome.createEl("h2", { text: "Plawe AI" });
   }
   resetChat() {
+    var _a, _b, _c;
     if (this.busy) return;
     this.messages = [];
     this.pending.clear();
+    this.contextFile = null;
+    this.attachedPaths = [];
+    this.uploadedAttachments = [];
+    this.inputEl.value = "";
+    (_a = this.currentNoteButton) == null ? void 0 : _a.removeClass("is-active");
+    (_c = (_b = this.currentNoteButton) == null ? void 0 : _b.querySelector("span:last-child")) == null ? void 0 : _c.replaceChildren("Aktuelle Notiz");
+    this.renderAttachments();
+    this.resizeInput();
     this.chatEl.empty();
     this.renderWelcome();
     this.queuePersistHistory();

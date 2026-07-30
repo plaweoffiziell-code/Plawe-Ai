@@ -227,6 +227,21 @@
   transform: scale(.97);
 }
 
+.plawe-ai-new-chat {
+  display: grid;
+  flex: 0 0 27px;
+  width: 27px;
+  max-width: 27px;
+  padding: 0;
+  place-items: center;
+  margin-left: auto;
+}
+
+.plawe-ai-new-chat svg {
+  width: 15px;
+  height: 15px;
+}
+
 .plawe-ai-attachments {
   display: flex;
   gap: 6px;
